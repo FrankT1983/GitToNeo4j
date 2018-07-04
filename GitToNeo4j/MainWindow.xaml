@@ -1,0 +1,48 @@
+﻿<Window x:Class="GitToNeo4j.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GitToNeo4j"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />            
+            
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="15" />
+        </Grid.RowDefinitions>
+
+        <TextBox Grid.Row="0" Grid.Column="1" x:Name="UrlInput" HorizontalAlignment="Stretch" VerticalAlignment="Center">https://github.com/FrankT1983/HelloWorldParseTest.git</TextBox>
+        <TextBox Grid.Row="1" Grid.Column="1" x:Name="LokalPath" HorizontalAlignment="Stretch" VerticalAlignment="Center">C:/Tmp/GitTest2</TextBox>
+        <TextBox Grid.Row="2" Grid.Column="1" x:Name="LokalAnalysisPath" HorizontalAlignment="Stretch" VerticalAlignment="Center">C:/Tmp/BaseForNow</TextBox>
+
+
+        <Label Grid.Row="0" Grid.Column="0" >Git Repo Path</Label>
+        <Label Grid.Row="1" Grid.Column="0" >Local Clone Destination</Label>
+        <Label Grid.Row="2" Grid.Column="0" >Local Result Destination</Label>
+
+        <Button Grid.Row="0" Grid.Column="2" Margin="5" Click="OnClone" >Clone</Button>
+        <Button Grid.Row="1" Grid.Column="2" Margin="5" Click="OnClear" >ClearDB</Button>
+        
+        <Button Grid.Row="3" Grid.Column="2"  Margin="5" Click="OnCommitsToDb">Commits To Db</Button>
+        <Button Grid.Row="4" Grid.Column="2"  Margin="5" >More Stuff</Button>
+
+        <ScrollViewer Grid.Row="5" Grid.ColumnSpan="2">
+            <TextBlock   x:Name="Output"></TextBlock>
+        </ScrollViewer>
+
+        <ProgressBar Grid.Row="6" Grid.ColumnSpan="2" x:Name="SharedProgressBar"  Margin="2" Minimum="0" Maximum="1"/>
+    </Grid>
+</Window>

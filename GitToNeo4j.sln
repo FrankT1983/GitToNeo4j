@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2018
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitToNeo4j", "GitToNeo4j\GitToNeo4j.csproj", "{942294B9-091A-4483-9262-837927084392}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitAnalysis", "GitAnalysis\GitAnalysis.csproj", "{CD0242D9-F49C-469D-8DEA-C22326A5D007}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{942294B9-091A-4483-9262-837927084392}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{942294B9-091A-4483-9262-837927084392}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{942294B9-091A-4483-9262-837927084392}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{942294B9-091A-4483-9262-837927084392}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD0242D9-F49C-469D-8DEA-C22326A5D007}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD0242D9-F49C-469D-8DEA-C22326A5D007}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD0242D9-F49C-469D-8DEA-C22326A5D007}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD0242D9-F49C-469D-8DEA-C22326A5D007}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {87F6DB26-673E-4168-9034-BDC99E213E6E}
+	EndGlobalSection
+EndGlobal
