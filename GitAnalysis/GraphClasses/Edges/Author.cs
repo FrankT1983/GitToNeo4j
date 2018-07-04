@@ -29,4 +29,60 @@ namespace GitAnalysis.GraphClasses.Edges
         {
         }
     }
+
+    public class CreatedFile : BaseEdge
+    {
+        public CreatedFile(Neo4jWrapper neo4jwrapp) : base(neo4jwrapp)
+        {
+        }
+
+        public CreatedFile() : base(-1)
+        {
+        }
+    }
+
+    public class RenamedFile : BaseEdge
+    {
+        public RenamedFile(Neo4jWrapper neo4jwrapp) : base(neo4jwrapp)
+        {
+        }
+
+        public RenamedFile() : base(-1)
+        {
+        }
+    }
+
+    public class ModifiedFile : BaseEdge
+    {
+        public ModifiedFile(Neo4jWrapper neo4jwrapp) : base(neo4jwrapp)
+        {
+        }
+
+        public ModifiedFile() : base(-1)
+        {
+        }
+    }
+
+
+    public class Commitor : BaseEdge
+    {
+        public Commitor(Neo4jWrapper neo4jwrapp) : base(neo4jwrapp)
+        {
+        }
+
+        public Commitor() : base(-1)
+        {
+        }
+    }
+
+    public class CommitParent : BaseEdge
+    {
+        public CommitParent(Neo4jWrapper neo4jwrapp) : base(neo4jwrapp)
+        {
+        }
+
+        public CommitParent() : base(-1)
+        {
+        }
+    }
 }

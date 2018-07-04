@@ -83,6 +83,7 @@
     <Compile Include="GraphClasses\Edges\Author.cs" />
     <Compile Include="GraphClasses\Node\BaseNode.cs" />
     <Compile Include="GraphClasses\Node\Commit.cs" />
+    <Compile Include="GraphClasses\Node\File.cs" />
     <Compile Include="GraphClasses\Node\InfoNode.cs" />
     <Compile Include="GraphClasses\Node\Person.cs" />
     <Compile Include="Neo4jWrapper.cs" />

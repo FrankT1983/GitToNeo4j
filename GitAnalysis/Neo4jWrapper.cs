@@ -84,26 +84,16 @@ namespace GitAnalysis
             this.client.Cypher.Match("(n)").Delete("n").ExecuteWithoutResults();            
         }
 
-        internal void WriteEdge(Person fromNode, BaseNode toNode, BaseEdge edge)
-        {
-            if (toNode.Id == -1)
-            {
-                throw new NotImplementedException();
-            }
-
+        internal void WriteEdge(BaseNode fromNode, BaseNode toNode, BaseEdge edge)
+        {           
             var tmp = client.Cypher.MatchQuerry("n", fromNode).MatchQuerry("m", toNode).Query.DebugQueryText;
 
-            client.Cypher.MatchQuerry("n", fromNode)
+            var query = client.Cypher.MatchQuerry("n", fromNode)
                          .MatchQuerry("m", toNode).
                              Create("(n)-[:"+ edge.GetType().Name+ " {newEdge}]->(m)").
-                             WithParam("newEdge", edge).ExecuteWithoutResults();
+                             WithParam("newEdge", edge);
 
-            //client.Cypher.MatchQuerry("n", fromNode).MatchQuerry("m", toNode).
-            //                 Create("(n)-[:" + edge.GetType().Name + "}]->(m)");
-
-            //client.Cypher.MatchQuerry("n", fromNode).MatchQuerry("m", toNode).Create("(n)-[:" + edge.GetType().Name + "}]->(m)").ExecuteWithoutResults();
-
-            var tmp2 = client.Cypher.MatchQuerry("n", fromNode).MatchQuerry("m", toNode).Create("(n)-[:" + edge.GetType().Name + "}]->(m)").Query.DebugQueryText;
+            query.ExecuteWithoutResults();
         }
        
     }
@@ -120,6 +110,11 @@ namespace GitAnalysis
             {
                 return cypher.MatchQuerry(varialbeName, (Commit)node);
             }
+            if (node is File)
+            {
+                return cypher.MatchQuerry(varialbeName, (File)node);
+            }
+
 
             string matchClause = "(" + varialbeName + ":" + node.GetType().Name + ")";
             if (node.Id > 0)
@@ -144,6 +139,15 @@ namespace GitAnalysis
             string matchClause = "(" + varialbeName + ":" + node.GetType().Name + ")";
             string whereClause = varialbeName + "." + nameof(node.Sha) + "=\"" + node.Sha + "\"";                                        
             return cypher.Match(matchClause).Where(whereClause);          
+        }
+
+        public static ICypherFluentQuery MatchQuerry(this ICypherFluentQuery cypher, string varialbeName, File node)
+        {
+            string matchClause = "(" + varialbeName + ":" + node.GetType().Name + ")";
+            string whereClause = varialbeName + "." + nameof(node.Commit) + "=\"" + node.Commit + "\"" +
+                                    " and  " +
+                                varialbeName + "." + nameof(node.Path) + "=\"" + node.Path + "\""; 
+            return cypher.Match(matchClause).Where(whereClause);
         }
     }
 }
