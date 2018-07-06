@@ -121,6 +121,7 @@ namespace GitToNeo4j
         {
             try
             {
+                this.StatusChanged(" Writing Abstract Syntax tree");
                 wrapper.WriteAst();
                 this.StatusChanged("Finished Writing Abstract Syntax tree");
             }

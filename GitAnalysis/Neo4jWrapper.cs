@@ -127,6 +127,20 @@ namespace GitAnalysis
             var query = client.Cypher.Match("(n:" + type.Name + ")").Return<T>("n");
             return query.Results;
         }
+
+        internal IEnumerable<T> FindWithoutLabel<T>(Type type, string label)
+        {
+            var query = client.Cypher.Match("(n:" + type.Name + ")")
+                .Where("not n:" + label)
+                .Return<T>("n");
+            return query.Results;
+        }
+
+        internal void AddLabel(File file, string hasAstLabel)
+        {
+            var query = client.Cypher.MatchQuerry("n", file).Set("n:" + hasAstLabel );
+            query.ExecuteWithoutResults();
+        }
     }
 
     public static class CypherFluentExtension

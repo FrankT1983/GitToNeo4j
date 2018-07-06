@@ -2,6 +2,8 @@
 {
     public class File : BaseNode
     {
+        public const string HasAstLabel = "FileWithAst";
+
         public string Path { get; internal set; }
         public string Commit { get; internal set; }
 

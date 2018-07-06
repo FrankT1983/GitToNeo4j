@@ -137,13 +137,15 @@ namespace GitAnalysis
         public void WriteAst()
         {
             int i = 0;
-            var files = this.neo4jwrapp.Find<File>(typeof(File)).ToList();
+            var files = this.neo4jwrapp.FindWithoutLabel<File>(typeof(File), File.HasAstLabel).ToList();
             foreach(var file in files)
             {
-                this.FireProgressChanged(i++ / (double)files.Count);
+                this.FireProgressChanged(i++ / (double)files.Count);                              
                 var fileContent = GetRaw(file.Commit, file.Path);
                 var parsedGraph = GumTreeWrapper.Parse(fileContent);
-                AddAstGraphToGraph(parsedGraph, file);                
+                AddAstGraphToGraph(parsedGraph, file);
+
+                this.neo4jwrapp.AddLabel(file, File.HasAstLabel);
             }
             this.FireProgressChanged(-1);
         }
