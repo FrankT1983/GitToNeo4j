@@ -194,7 +194,20 @@ namespace GitAnalysis
         {
             var edges = this.neo4jwrapp.FindAllEdgesBetweenTypes<GraphClasses.Node.Commit, ModifiedFile, File>();
 
+            foreach(var e in edges)
+            {
+                var changeOriginCommit = e.Edge.ChangeParrentCommit;
+                var currentFilePath = e.To.Path;
 
+                var originFile = this.neo4jwrapp.Find<File>(new File() { Path = currentFilePath, Commit = changeOriginCommit }).FirstOrDefault();
+
+                if (originFile!=null)
+                {
+                    this.neo4jwrapp.WriteEdge(originFile, e.To, new NextFileVersion(this.neo4jwrapp));
+                }
+                
+
+            }
 
 
             int blub;
@@ -214,7 +227,6 @@ namespace GitAnalysis
                 {
                     foreach (var p in c.Parents)
                     {
-
                         foreach (var change in Repo.Diff.Compare<TreeChanges>(p.Tree, c.Tree))
                         {
                             // generate for changed file in current commit 
@@ -266,6 +278,22 @@ namespace GitAnalysis
                                 }
                             }
                         }
+                    }
+
+                    // add no modification nodes to create complete change history
+                    foreach (var element in CommitAnalyzser.GetAllLeafesInTree(c.Tree))
+                    {
+                        {
+                            var fileSearch = new File() { Path = element.Path, Commit = c.Sha };
+                            if (neo4jwrapp.Find<BaseNode>(fileSearch).Any())
+                            {
+                                continue;
+                            }
+                        }
+                        var fileNode = new File(this.neo4jwrapp) { Path = element.Path, Commit = c.Sha };
+
+                        this.neo4jwrapp.WriteNode(fileNode);
+                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new NoModification(this.neo4jwrapp));
                     }
                 }
                 else

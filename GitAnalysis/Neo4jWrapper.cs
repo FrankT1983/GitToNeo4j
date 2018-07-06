@@ -110,9 +110,7 @@ namespace GitAnalysis
         }
 
         internal void WriteEdge(BaseNode fromNode, BaseNode toNode, BaseEdge edge)
-        {           
-            var tmp = client.Cypher.MatchQuerry("n", fromNode).MatchQuerry("m", toNode).Query.DebugQueryText;
-
+        {                    
             var query = client.Cypher.MatchQuerry("n", fromNode)
                          .MatchQuerry("m", toNode).
                              Create("(n)-[:"+ edge.GetType().Name+ " {newEdge}]->(m)").
