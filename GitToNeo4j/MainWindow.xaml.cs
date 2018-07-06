@@ -44,6 +44,17 @@ namespace GitToNeo4j
             });
         }
 
+
+        private void OnParseAst(object sender, RoutedEventArgs e)
+        {
+            this.viewmodel.ParseAst(new ViewModel.AnalysisOptions()
+            {
+                LocalPath = this.LokalPath.Text,
+                AnalysisPath = this.LokalAnalysisPath.Text
+            });
+
+        }
+
         private void OnClear(object sender, RoutedEventArgs e)
         {
             this.viewmodel.Update(new ViewModel.AnalysisOptions()

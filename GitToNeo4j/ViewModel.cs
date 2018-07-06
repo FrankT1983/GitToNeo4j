@@ -9,6 +9,7 @@ namespace GitToNeo4j
     {
         private BackgroundWorker cloneWorker = new BackgroundWorker();
         private BackgroundWorker commitWorker = new BackgroundWorker();
+        private BackgroundWorker astWorker = new BackgroundWorker();
 
         private string RepoToClone = "";
         private string LocalDestiantion = "";
@@ -18,8 +19,11 @@ namespace GitToNeo4j
         public ViewModel()
         {
             cloneWorker.DoWork += new DoWorkEventHandler((obj, arg) => CloneGit());
-            commitWorker.DoWork += new DoWorkEventHandler((obj, arg) => { Update(arg.Argument as AnalysisOptions); AnalyzeGit(); });                
+            commitWorker.DoWork += new DoWorkEventHandler((obj, arg) => { Update(arg.Argument as AnalysisOptions); AnalyzeGit(); });
+            astWorker.DoWork += new DoWorkEventHandler((obj, arg) => { Update(arg.Argument as AnalysisOptions); AnalyzeAst(); });
         }
+
+        
 
         public delegate void StatusChangedHandler(string UpdateText);
         public delegate void ProgressChangedHandler(double percentage);
@@ -58,7 +62,7 @@ namespace GitToNeo4j
                 return;
             }
             FireStatusUpdate("Clone Finished");
-        }
+        }               
 
         internal void ClearDb()
         {            
@@ -72,6 +76,12 @@ namespace GitToNeo4j
             this.commitWorker.RunWorkerAsync(options);
         }
 
+        internal void ParseAst(AnalysisOptions options)
+        {
+            if (this.astWorker.IsBusy) { return; }
+            this.astWorker.RunWorkerAsync(options);
+        }
+
         private void FireStatusUpdate(string update)
         {
             if (this.StatusChanged == null) return;
@@ -83,21 +93,21 @@ namespace GitToNeo4j
         {
             if (this.ProgressChanged == null) return;
             this.ProgressChanged(percentage);
-        }
-
-        
+        }        
 
         public void Update(AnalysisOptions option)
         {
             this.wrapper = new AnalysisBase(option.LocalPath, option.AnalysisPath);
+            this.wrapper.ProgressChanged += (per) => this.FireProgressUpdate(per);
+            this.wrapper.StatusChanged += (stat) => this.FireStatusUpdate(stat);
         }
 
         private void AnalyzeGit()
-        {         
-            
+        {                    
             try
-            {
+            {                
                 wrapper.WriteCommitNodes();
+                this.ProgressChanged(-1);
                 this.StatusChanged("Finished Writing nodes");
             }
             catch(Exception e)
@@ -105,7 +115,21 @@ namespace GitToNeo4j
                 this.StatusChanged(e.Message);
             }
         }
-        
+
+
+        private void AnalyzeAst()
+        {
+            try
+            {
+                wrapper.WriteAst();
+                this.StatusChanged("Finished Writing Abstract Syntax tree");
+            }
+            catch (Exception e)
+            {
+                this.StatusChanged(e.Message);
+            }
+        }
+
         internal class AnalysisOptions
         {
             public AnalysisOptions()

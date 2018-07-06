@@ -1,16 +1,23 @@
-﻿using GitAnalysis.GraphClasses.Edges;
+﻿using GitAnalysis.AstStuff;
+using GitAnalysis.AstStuff.InternalGraph;
+using GitAnalysis.GraphClasses.Edges;
 using GitAnalysis.GraphClasses.Node;
 using LibGit2Sharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace GitAnalysis
 {
     public class AnalysisBase
     {
+        public delegate void StatusChangedHandler(string UpdateText);
+        public delegate void ProgressChangedHandler(double percentage);
+
+        public event StatusChangedHandler StatusChanged;
+        public event ProgressChangedHandler ProgressChanged;
+
         public string RepoCloneFolder { get; }
         public string AnalysisDestination { get; }
         public Repository Repo { get; }
@@ -31,10 +38,28 @@ namespace GitAnalysis
         {
             List<LibGit2Sharp.Commit> commits = CommitsByTime();
 
+
+            this.FireStatusChanged("Add Persons.");
             AddPersonsToGraph(commits);
+            this.FireStatusChanged("Finished Persons, write Commits and link to persons");
             AddCommitsAndLinkToPersons(commits);
+            this.FireStatusChanged("Person <-> Commit, Write Commit <-> Commit");
             AddCommitParentChildDependencies(commits);
+            this.FireStatusChanged("Commit <-> Commit, Write Commit <-> File");
             AddCommitFiles(commits);
+            this.neo4jwrapp.UpdateInfo();
+        }
+
+        private void FireStatusChanged(string update)
+        {
+            if (this.StatusChanged == null) return;
+            this.StatusChanged(update);
+        }
+
+        private void FireProgressChanged(double percentage)
+        {
+            if (this.ProgressChanged == null) return;
+            this.ProgressChanged(percentage);
         }
 
         private List<LibGit2Sharp.Commit> CommitsByTime()
@@ -46,8 +71,12 @@ namespace GitAnalysis
 
         private void AddPersonsToGraph(List<LibGit2Sharp.Commit> commits)
         {
-            foreach (var a in commits.Select(c => c.Author))
+            var authors = commits.Select(c => c.Author).ToList();
+
+            int i = 0;
+            foreach (var a in authors)
             {
+                this.FireProgressChanged(i++ / (double)authors.Count);
                 {
                     var searchPerson = new Person() { Name = a.Name, EMail = a.Email };
                     if (neo4jwrapp.Find(searchPerson).Any())
@@ -69,8 +98,10 @@ namespace GitAnalysis
 
         private void AddCommitsAndLinkToPersons(List<LibGit2Sharp.Commit> commits)
         {
+            int i = 0;
             foreach (var c in commits)
             {
+                this.FireProgressChanged(i++ / (double)commits.Count);
                 {
                     var searchCommit = new GraphClasses.Node.Commit() { Sha = c.Sha, Message = c.Message };
                     if (neo4jwrapp.Find<BaseNode>(searchCommit).Any())
@@ -90,8 +121,10 @@ namespace GitAnalysis
 
         private void AddCommitParentChildDependencies(List<LibGit2Sharp.Commit> commits)
         {
+            int i = 0;
             foreach (var c in commits)
             {
+                this.FireProgressChanged(i++ / (double)commits.Count);
                 foreach (var p in c.Parents)
                 {
                     this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha },
@@ -101,6 +134,56 @@ namespace GitAnalysis
             }
         }
 
+        public void WriteAst()
+        {
+            int i = 0;
+            var files = this.neo4jwrapp.Find<File>(typeof(File)).ToList();
+            foreach(var file in files)
+            {
+                this.FireProgressChanged(i++ / (double)files.Count);
+                var fileContent = GetRaw(file.Commit, file.Path);
+                var parsedGraph = GumTreeWrapper.Parse(fileContent);
+                AddAstGraphToGraph(parsedGraph, file);                
+            }
+            this.FireProgressChanged(-1);
+        }
+
+        private void AddAstGraphToGraph(AstGraph parsedGraph, File rootFile)
+        {                       
+            foreach(var n in parsedGraph.Nodes)
+            {
+                n.Id = this.neo4jwrapp.NextNodeId();
+                n.FilePath = rootFile.Path;
+                n.CommitSha = rootFile.Commit;
+                this.neo4jwrapp.WriteNode(n);
+            }
+
+            BaseNode root = parsedGraph.GetRoot();
+            if (root != null)
+            {
+                this.neo4jwrapp.WriteEdge(rootFile, root, new AstOfFile(this.neo4jwrapp));
+            }
+
+            foreach (var e in parsedGraph.Edges)
+            {               
+                var from = this.neo4jwrapp.Find(new AstElement() { AstId = e.From , FilePath = rootFile.Path , CommitSha = rootFile.Commit }).FirstOrDefault();
+                var to = this.neo4jwrapp.Find(new AstElement() { AstId = e.To, FilePath = rootFile.Path, CommitSha = rootFile.Commit }).FirstOrDefault();
+
+                if ((from != null) && (to != null))
+                {
+                    this.neo4jwrapp.WriteEdge(from, to, new AstAbove(this.neo4jwrapp));
+                }
+            }
+            
+        }
+
+        private string GetRaw(string commitSha, string path)
+        {
+           
+            var commit = Repo.Commits.FirstOrDefault(c => c.Sha == commitSha);
+            return CommitAnalyzser.StreamToString(CommitAnalyzser.ContentStreamFromPath(commit, path));                        
+        }
+
         private void AddCommitFiles(List<LibGit2Sharp.Commit> commits)
         {
 
@@ -108,7 +191,8 @@ namespace GitAnalysis
             double count = commits.Count();
             foreach (var c in commits)
             {
-                //FireProgressUpdate(i++ / count);                            
+                this.FireProgressChanged(i++ / count);     
+                i++;
                 if (c.Parents.Any())
                 {                    
                     foreach (var p in c.Parents)
@@ -121,7 +205,7 @@ namespace GitAnalysis
                             {
                                 {
                                     var fileSearch = new File() { Path = change.Path, Commit = c.Sha };
-                                    if (neo4jwrapp.Find<BaseNode>(fileSearch).Any())
+                                    if (neo4jwrapp.Find<File>(fileSearch).Any())
                                     {
                                         continue;
                                     }
@@ -190,31 +274,4 @@ namespace GitAnalysis
             }
         }
     }
-
-    internal class CommitAnalyzser
-    {
-      
-
-     
-        public static IEnumerable<TreeEntry> GetAllLeafesInTree(Tree t)
-        {
-            foreach (var e in t)
-            {
-                switch (e.TargetType)
-                {
-                    case TreeEntryTargetType.Tree:
-                        foreach (var r in GetAllLeafesInTree(e.Target as Tree))
-                        {
-                            yield return r;
-                        }
-                        break;
-
-                    default:
-                        yield return e;
-                        break;
-                }
-            }
-        }
-    }
-
 }

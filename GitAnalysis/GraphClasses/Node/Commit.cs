@@ -8,11 +8,9 @@
 
         public Commit() : base(-1)
         {
-
         }
 
         public string Sha { get; internal set; }
         public string Message { get; internal set; }
     }
-
-    }
+}

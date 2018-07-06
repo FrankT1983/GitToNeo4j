@@ -11,6 +11,13 @@
         {
             this.Id = id;
         }
+
+
+        public BaseNode()
+        {
+            int shouldNotHappen = 0;
+        }
+
         public long Id { get; internal set; }
     }
 }

@@ -37,7 +37,7 @@
         <Button Grid.Row="1" Grid.Column="2" Margin="5" Click="OnClear" >ClearDB</Button>
         
         <Button Grid.Row="3" Grid.Column="2"  Margin="5" Click="OnCommitsToDb">Commits To Db</Button>
-        <Button Grid.Row="4" Grid.Column="2"  Margin="5" >More Stuff</Button>
+        <Button Grid.Row="4" Grid.Column="2"  Margin="5" Click="OnParseAst">ParseAst</Button>
 
         <ScrollViewer Grid.Row="5" Grid.ColumnSpan="2">
             <TextBlock   x:Name="Output"></TextBlock>

@@ -24,7 +24,7 @@ namespace GitAnalysis.GraphClasses.Node
 
         public string CloneFolder { get; internal set; }
         public string AnalysisFolder { get; internal set; }
-        public int NextNodeId { get; internal set; }
-        public int NextEdgeId { get; internal set; }        
+        public long NextNodeId { get; internal set; }
+        public long NextEdgeId { get; internal set; }        
     }
 }

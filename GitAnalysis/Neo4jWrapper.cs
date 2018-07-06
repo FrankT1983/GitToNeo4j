@@ -6,6 +6,7 @@ using Neo4jClient.Cypher;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace GitAnalysis
 {
@@ -23,12 +24,16 @@ namespace GitAnalysis
 
         public long NextNodeId()
         {
-            return nextNodeId++;
+            var next = ++nextNodeId;
+            UpdateInfo();
+            return next;
         }
 
         public long NextEdgeId()
         {
-            return nextEdgeId++;
+            var next = ++nextEdgeId;
+            UpdateInfo();
+            return next;
         }
 
         GraphClient client;
@@ -50,7 +55,7 @@ namespace GitAnalysis
             var info = this.GetInfoNode();
             if (info == null)
             {
-                var n = new InfoNode(0) { CloneFolder = repoCloneFolder, AnalysisFolder = repoCloneFolder, NextNodeId = 1, NextEdgeId = 0 };
+                var n = new InfoNode(1) { CloneFolder = repoCloneFolder, AnalysisFolder = repoCloneFolder, NextNodeId = 2, NextEdgeId = 1 };
                 WriteNode(n);
                 info = this.GetInfoNode();
             }
@@ -67,9 +72,30 @@ namespace GitAnalysis
                .ExecuteWithoutResults();
         }
 
+
+        private void UpdateNode(InfoNode node)
+        {
+            client.Cypher.MatchQuerry("n", node)
+                    .Set("n.NextNodeId = {NextNodeId}")
+                    .WithParam("NextNodeId", node.NextNodeId)
+                    .Set("n.NextEdgeId = {NextEdgeId}")
+                    .WithParam("NextEdgeId", node.NextEdgeId)
+               .ExecuteWithoutResults();
+        }
+
+        internal void UpdateInfo()
+        {
+            var info = this.GetInfoNode();
+            info.NextEdgeId = this.nextEdgeId;
+            info.NextNodeId = this.nextNodeId;
+
+            this.UpdateNode(info);
+        }
+
         internal IEnumerable<T> Find<T>(T node) where T : BaseNode
         {
-            return client.Cypher.MatchQuerry("n", node).Return<T>("n").Results;
+            var query = client.Cypher.MatchQuerry("n", node).Return<T>("n");
+            return query.Results;
         }
 
         internal void UpdateInfo(GraphStatus wrotePeople)
@@ -95,7 +121,12 @@ namespace GitAnalysis
 
             query.ExecuteWithoutResults();
         }
-       
+
+        internal IEnumerable<T> Find<T>(Type type)
+        {
+            var query = client.Cypher.Match("(n:" + type.Name + ")").Return<T>("n");
+            return query.Results;
+        }
     }
 
     public static class CypherFluentExtension
@@ -114,7 +145,10 @@ namespace GitAnalysis
             {
                 return cypher.MatchQuerry(varialbeName, (File)node);
             }
-
+            if (node is AstElement)
+            {
+                return cypher.MatchQuerry(varialbeName, (AstElement)node);
+            }
 
             string matchClause = "(" + varialbeName + ":" + node.GetType().Name + ")";
             if (node.Id > 0)
@@ -148,6 +182,29 @@ namespace GitAnalysis
                                     " and  " +
                                 varialbeName + "." + nameof(node.Path) + "=\"" + node.Path + "\""; 
             return cypher.Match(matchClause).Where(whereClause);
+        }
+
+        public static ICypherFluentQuery MatchQuerry(this ICypherFluentQuery cypher, string varialbeName, AstElement node)
+        {
+            string matchClause = "(" + varialbeName + ":" + node.GetType().Name + ")";
+            
+            var wherClause = new List<String>();
+
+            if (node.AstId > -1)
+            {
+                wherClause.Add(varialbeName + "." + nameof(node.AstId) + "=" + node.AstId);
+            }
+
+            if (!String.IsNullOrWhiteSpace(node.FilePath))
+            {
+                wherClause.Add(varialbeName + "." + nameof(node.FilePath) + "=\"" + node.FilePath + "\"");
+            }
+
+            if (!String.IsNullOrWhiteSpace(node.CommitSha))
+            {
+                wherClause.Add(varialbeName + "." + nameof(node.CommitSha) + "=\"" + node.CommitSha + "\"");
+            }
+            return cypher.Match(matchClause).Where(String.Join(" and " , wherClause));
         }
     }
 }
