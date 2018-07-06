@@ -2,6 +2,8 @@
 {
     public class ModifiedFile : BaseEdge
     {
+        public string ChangeParrentCommit { get; internal set; }
+
         public ModifiedFile(Neo4jWrapper neo4jwrapp) : base(neo4jwrapp)
         {
         }

@@ -11,6 +11,11 @@
         {
             this.Id = id;
         }
+
+        public BaseEdge()
+        {
+            this.Id = -1;
+        }
         public long Id { get; internal set; }
     }
 }

@@ -47,6 +47,10 @@ namespace GitAnalysis
             AddCommitParentChildDependencies(commits);
             this.FireStatusChanged("Commit <-> Commit, Write Commit <-> File");
             AddCommitFiles(commits);
+
+            this.FireStatusChanged("File <-> Commit, Write File <-> File");
+            AddFilesToFile(commits);
+
             this.neo4jwrapp.UpdateInfo();
         }
 
@@ -127,9 +131,9 @@ namespace GitAnalysis
                 this.FireProgressChanged(i++ / (double)commits.Count);
                 foreach (var p in c.Parents)
                 {
-                    this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha },
-                                              new GraphClasses.Node.Commit(null) { Sha = p.Sha },
-                                              new CommitParent(this.neo4jwrapp));
+                    this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = p.Sha },
+                                              new GraphClasses.Node.Commit(null) { Sha = c.Sha },
+                                              new NextCommit(this.neo4jwrapp));
                 }
             }
         }
@@ -138,9 +142,9 @@ namespace GitAnalysis
         {
             int i = 0;
             var files = this.neo4jwrapp.FindWithoutLabel<File>(typeof(File), File.HasAstLabel).ToList();
-            foreach(var file in files)
+            foreach (var file in files)
             {
-                this.FireProgressChanged(i++ / (double)files.Count);                              
+                this.FireProgressChanged(i++ / (double)files.Count);
                 var fileContent = GetRaw(file.Commit, file.Path);
                 var parsedGraph = GumTreeWrapper.Parse(fileContent);
                 AddAstGraphToGraph(parsedGraph, file);
@@ -151,8 +155,8 @@ namespace GitAnalysis
         }
 
         private void AddAstGraphToGraph(AstGraph parsedGraph, File rootFile)
-        {                       
-            foreach(var n in parsedGraph.Nodes)
+        {
+            foreach (var n in parsedGraph.Nodes)
             {
                 n.Id = this.neo4jwrapp.NextNodeId();
                 n.FilePath = rootFile.Path;
@@ -167,8 +171,8 @@ namespace GitAnalysis
             }
 
             foreach (var e in parsedGraph.Edges)
-            {               
-                var from = this.neo4jwrapp.Find(new AstElement() { AstId = e.From , FilePath = rootFile.Path , CommitSha = rootFile.Commit }).FirstOrDefault();
+            {
+                var from = this.neo4jwrapp.Find(new AstElement() { AstId = e.From, FilePath = rootFile.Path, CommitSha = rootFile.Commit }).FirstOrDefault();
                 var to = this.neo4jwrapp.Find(new AstElement() { AstId = e.To, FilePath = rootFile.Path, CommitSha = rootFile.Commit }).FirstOrDefault();
 
                 if ((from != null) && (to != null))
@@ -176,14 +180,25 @@ namespace GitAnalysis
                     this.neo4jwrapp.WriteEdge(from, to, new AstAbove(this.neo4jwrapp));
                 }
             }
-            
+
         }
 
         private string GetRaw(string commitSha, string path)
         {
-           
+
             var commit = Repo.Commits.FirstOrDefault(c => c.Sha == commitSha);
-            return CommitAnalyzser.StreamToString(CommitAnalyzser.ContentStreamFromPath(commit, path));                        
+            return CommitAnalyzser.StreamToString(CommitAnalyzser.ContentStreamFromPath(commit, path));
+        }
+
+        private void AddFilesToFile(List<LibGit2Sharp.Commit> commits)
+        {
+            var edges = this.neo4jwrapp.FindAllEdgesBetweenTypes<GraphClasses.Node.Commit, ModifiedFile, File>();
+
+
+
+
+            int blub;
+
         }
 
         private void AddCommitFiles(List<LibGit2Sharp.Commit> commits)
@@ -193,13 +208,13 @@ namespace GitAnalysis
             double count = commits.Count();
             foreach (var c in commits)
             {
-                this.FireProgressChanged(i++ / count);     
+                this.FireProgressChanged(i++ / count);
                 i++;
                 if (c.Parents.Any())
-                {                    
+                {
                     foreach (var p in c.Parents)
                     {
-                      
+
                         foreach (var change in Repo.Diff.Compare<TreeChanges>(p.Tree, c.Tree))
                         {
                             // generate for changed file in current commit 
@@ -219,17 +234,17 @@ namespace GitAnalysis
                                 switch (change.Status)
                                 {
                                     case ChangeKind.Modified:
-                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new ModifiedFile(this.neo4jwrapp));
+                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new ModifiedFile(this.neo4jwrapp) { ChangeParrentCommit= p.Sha });
                                         break;
                                     case ChangeKind.Renamed:
-                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new RenamedFile(this.neo4jwrapp));                                        
+                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new RenamedFile(this.neo4jwrapp));
                                         break;
-                                    case ChangeKind.Added:                                        
+                                    case ChangeKind.Added:
                                         this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new CreatedFile(this.neo4jwrapp));
                                         break;
                                     default:
                                         int useForBreakPoint = 0;
-                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new ModifiedFile(this.neo4jwrapp));
+                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new ModifiedFile(this.neo4jwrapp) { ChangeParrentCommit = p.Sha });
                                         break;
                                 }
                             }
@@ -259,20 +274,18 @@ namespace GitAnalysis
                     foreach (var element in CommitAnalyzser.GetAllLeafesInTree(c.Tree))
                     {
                         {
-                            var fileSearch= new File() { Path = element.Path, Commit = c.Sha };
+                            var fileSearch = new File() { Path = element.Path, Commit = c.Sha };
                             if (neo4jwrapp.Find<BaseNode>(fileSearch).Any())
                             {
                                 continue;
                             }
                         }
-
-
-                        var fileNode = new File(this.neo4jwrapp) { Path = element.Path, Commit = c.Sha };                       
+                        var fileNode = new File(this.neo4jwrapp) { Path = element.Path, Commit = c.Sha };
 
                         this.neo4jwrapp.WriteNode(fileNode);
-                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha}, fileNode, new CreatedFile(this.neo4jwrapp));                        
+                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new CreatedFile(this.neo4jwrapp));
                     }
-                }                             
+                }
             }
         }
     }

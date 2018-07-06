@@ -166,13 +166,14 @@
     <Compile Include="AstStuff\GumTreeWrapper.cs" />
     <Compile Include="AstStuff\InternalGraph\Graph.cs" />
     <Compile Include="CommitAnalyzser.cs" />
+    <Compile Include="CypherFluentExtension.cs" />
     <Compile Include="GraphClasses\Edges\AstAbove.cs" />
     <Compile Include="GraphClasses\Edges\Author.cs" />
     <Compile Include="GraphClasses\Edges\BaseEdge.cs" />
     <Compile Include="GraphClasses\Edges\Commitor.cs" />
-    <Compile Include="GraphClasses\Edges\CommitParent.cs" />
     <Compile Include="GraphClasses\Edges\CreatedFile.cs" />
     <Compile Include="GraphClasses\Edges\ModifiedFile.cs" />
+    <Compile Include="GraphClasses\Edges\NextCommit.cs" />
     <Compile Include="GraphClasses\Edges\RenamedFile.cs" />
     <Compile Include="GraphClasses\Node\AstElement.cs" />
     <Compile Include="GraphClasses\Node\BaseNode.cs" />
@@ -180,6 +181,7 @@
     <Compile Include="GraphClasses\Node\File.cs" />
     <Compile Include="GraphClasses\Node\InfoNode.cs" />
     <Compile Include="GraphClasses\Node\Person.cs" />
+    <Compile Include="Neo4jEdge.cs" />
     <Compile Include="Neo4jWrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
