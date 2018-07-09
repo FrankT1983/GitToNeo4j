@@ -155,6 +155,59 @@ namespace GitAnalysis
             this.FireProgressChanged(-1);
         }
 
+        public void LinkAst()
+        {
+            int i = 0;            
+            var nextVersionEdges = this.neo4jwrapp.FindAllEdgesBetweenTypes<File, NextFileVersion, File>();
+            double count = nextVersionEdges.Count();
+            foreach (var e in nextVersionEdges)
+            {
+                this.FireProgressChanged(i++/count);
+
+                if (this.neo4jwrapp.FindAllEdgesBetweenNodes<File, WithAstTransition, File>(e.From, e.To).Any())
+                {
+                    continue;
+                }
+
+
+                var fromContent = GetRaw(e.From.Commit, e.From.Path);
+                var toContent = GetRaw(e.To.Commit, e.To.Path);
+
+                var transitions = GumTreeWrapper.Compare2(fromContent,toContent);
+
+
+                foreach(var transitionEdge in transitions)
+                {
+                    if ( String.Compare(transitionEdge.Mode,"Keep") == 0 )
+                    {
+                        this.neo4jwrapp.AddTransitionEdge(e.From.Commit, e.From.Path, transitionEdge.From, 
+                                                          e.To.Commit, e.To.Path, transitionEdge.To, 
+                                                          new NoCodeModification(this.neo4jwrapp));
+                        continue;
+                    }
+
+                    if (String.Compare(transitionEdge.Mode, "Insert") == 0)
+                    {
+
+                        continue;
+                    }
+
+                    if (String.Compare(transitionEdge.Mode, "Modified") == 0)
+                    {
+                        this.neo4jwrapp.AddTransitionEdge(e.From.Commit, e.From.Path, transitionEdge.From,
+                                                          e.To.Commit, e.To.Path, transitionEdge.To,
+                                                          new ModifiedCode(this.neo4jwrapp));
+                        continue;
+                    }
+
+                    throw new NotImplementedException("Missing Ast Transition for "+transitionEdge.Mode);
+                }
+
+                this.neo4jwrapp.WriteEdge(e.From, e.To, new WithAstTransition(this.neo4jwrapp));                
+            }
+            this.FireProgressChanged(-1);
+        }
+
         private void AddAstGraphToGraph(AstGraph parsedGraph, File rootFile)
         {
             foreach (var n in parsedGraph.Nodes)
@@ -193,8 +246,6 @@ namespace GitAnalysis
 
         private void AddFilesToFile(List<LibGit2Sharp.Commit> commits)
         {
-
-
             // File <[ContainsFile]-Commit-[nextCommit]->Commit-[ContainsFile]->File mit pfad == 
 
             // todo: do renames first??
@@ -212,13 +263,9 @@ namespace GitAnalysis
             //    {
             //        this.neo4jwrapp.WriteEdge(originFile, e.To, new NextFileVersion(this.neo4jwrapp));
             //    }
-
-
             //}
 
-
             this.neo4jwrapp.RemoveIntermediateNoChanges();
-
         }
 
         private void AddCommitFiles(List<LibGit2Sharp.Commit> commits)

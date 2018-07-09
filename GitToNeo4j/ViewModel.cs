@@ -10,6 +10,7 @@ namespace GitToNeo4j
         private BackgroundWorker cloneWorker = new BackgroundWorker();
         private BackgroundWorker commitWorker = new BackgroundWorker();
         private BackgroundWorker astWorker = new BackgroundWorker();
+        private BackgroundWorker astLinkWorker = new BackgroundWorker();
 
         private string RepoToClone = "";
         private string LocalDestiantion = "";
@@ -21,9 +22,8 @@ namespace GitToNeo4j
             cloneWorker.DoWork += new DoWorkEventHandler((obj, arg) => CloneGit());
             commitWorker.DoWork += new DoWorkEventHandler((obj, arg) => { Update(arg.Argument as AnalysisOptions); AnalyzeGit(); });
             astWorker.DoWork += new DoWorkEventHandler((obj, arg) => { Update(arg.Argument as AnalysisOptions); AnalyzeAst(); });
-        }
-
-        
+            astLinkWorker.DoWork += new DoWorkEventHandler((obj, arg) => { Update(arg.Argument as AnalysisOptions); LinkAsts(); });
+        }        
 
         public delegate void StatusChangedHandler(string UpdateText);
         public delegate void ProgressChangedHandler(double percentage);
@@ -82,6 +82,12 @@ namespace GitToNeo4j
             this.astWorker.RunWorkerAsync(options);
         }
 
+        internal void LinkAsts(AnalysisOptions options)
+        {
+            if (this.astLinkWorker.IsBusy) { return; }
+            this.astLinkWorker.RunWorkerAsync(options);
+        }
+
         private void FireStatusUpdate(string update)
         {
             if (this.StatusChanged == null) return;
@@ -121,9 +127,23 @@ namespace GitToNeo4j
         {
             try
             {
-                this.StatusChanged(" Writing Abstract Syntax tree");
+                this.StatusChanged("Writing Abstract Syntax tree");
                 wrapper.WriteAst();
                 this.StatusChanged("Finished Writing Abstract Syntax tree");
+            }
+            catch (Exception e)
+            {
+                this.StatusChanged(e.Message);
+            }
+        }
+
+        private void LinkAsts()
+        {
+            try
+            {
+                this.StatusChanged("Start Linking Abstract Syntax Trees");
+                wrapper.LinkAst();
+                this.StatusChanged("Finished Linking Abstract Syntax Trees");
             }
             catch (Exception e)
             {

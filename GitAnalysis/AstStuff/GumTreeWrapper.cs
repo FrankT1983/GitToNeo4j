@@ -64,10 +64,26 @@ namespace GitAnalysis.AstStuff
             var file1 = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".cs";
             System.IO.File.WriteAllText(file1, content1);
 
-            var gumTreeResult = Run("java" , " -jar C:\\PlayGround\\Java\\GumTreeClient.jar " + file1);
+            var gumTreeResult = Run("java", " -jar C:\\PlayGround\\Java\\GumTreeClient.jar " + file1);
             System.IO.File.Delete(file1);
-            return ParseGumTreeOutToGraph(gumTreeResult);            
+            return ParseGumTreeOutToGraph(gumTreeResult);
         }
+
+        public static List<TransitionEdge> Compare2(string content1, string content2)
+        {
+            var file1 = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".cs";
+            var file2 = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + ".cs";
+            System.IO.File.WriteAllText(file1, content1);
+            System.IO.File.WriteAllText(file2, content2);
+
+            var gumTreeResult = Run("java", " -jar C:\\PlayGround\\Java\\GumTreeClient.jar " + file1 + " " + file2);
+
+            System.IO.File.Delete(file1);
+            System.IO.File.Delete(file2);
+
+            return ParseGumTreeOutToTransitionGraph(gumTreeResult);
+        }
+
 
         // todo: this is realy curde ... rewrite this and do tests
         public static InternalGraph.AstGraph ParseGumTreeOutToGraph(string toParse)
@@ -104,7 +120,7 @@ namespace GitAnalysis.AstStuff
                     int from = int.Parse(parts[2]);
                     int to = int.Parse(parts[4]);
 
-                    var edge = new Edge() { From = from, To=to };
+                    var edge = new Edge() { From = from, To = to };
                     result.AddEdge(edge);
                     continue;
                 }
@@ -114,6 +130,37 @@ namespace GitAnalysis.AstStuff
 
             return result;
         }
+
+        public static List<TransitionEdge> ParseGumTreeOutToTransitionGraph(string toParse)
+        {
+            var result = new List<TransitionEdge>();
+
+            var lines = toParse.Split('\n');
+            foreach (var l in lines)
+            {
+                if (String.IsNullOrWhiteSpace(l)) { continue; }
+                var parts = l.Trim().Split(' ');
+                
+                if (String.Compare(parts[0],"Action",true) != 0)
+                {   continue;   }
+
+                // Action Keep 45 55
+                String mode = parts[1];
+                int from = int.Parse(parts[2]);
+
+                int to = -1;
+                if (parts.Length > 3)
+                {
+                    to = int.Parse(parts[3]);
+                }
+
+                var edge = new TransitionEdge() { From = from, To = to, Mode =mode };
+                result.Add(edge);              
+            }
+
+            return result;
+        }
+
 
         // see https://stackoverflow.com/questions/15360624/wrapper-for-a-command-line-tool-in-c-sharp?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
         private static string Run(string exeName, string argsLine, int timeoutSeconds = 0)
@@ -162,8 +209,7 @@ namespace GitAnalysis.AstStuff
             }
 
             return "\t" + output;
-
         }
     }
-}
 
+}

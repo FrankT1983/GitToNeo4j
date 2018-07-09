@@ -149,7 +149,24 @@ namespace GitAnalysis
             var query = client.Cypher.MatchQuerry("n", file).Set("n:" + hasAstLabel );
             query.ExecuteWithoutResults();
         }
-       
+
+
+        internal IEnumerable<Neo4jEdge<N1, E, N2>> FindAllEdgesBetweenNodes<N1, E, N2>(N1 n1, N2 n2) where N1 : BaseNode where N2: BaseNode
+        {
+            //match (:Commit)-[e:ModifiedFile]->(n:File) return e.ChangeParrentCommit , n
+            var query = client.Cypher.Match("(sourceNode:" + typeof(N1).Name + " )-[edge:" + typeof(E).Name + "]->(destinationNode:" + typeof(N2).Name + ")")
+                .MatchQuerry("sourceNode", n1)
+                .MatchQuerry("destinationNode",n2)
+                .Return<Neo4jEdge<N1, E, N2>>((sourceNode, edge, destinationNode) => new Neo4jEdge<N1, E, N2>()
+                {
+                    From = sourceNode.As<N1>(),
+                    To = destinationNode.As<N2>(),
+                    Edge = edge.As<E>()
+                });
+            return query.Results;
+        }
+        
+
         internal IEnumerable<Neo4jEdge<N1,E,N2>> FindAllEdgesBetweenTypes<N1, E, N2>()
         {
             //match (:Commit)-[e:ModifiedFile]->(n:File) return e.ChangeParrentCommit , n
@@ -161,7 +178,7 @@ namespace GitAnalysis
                     Edge = edge.As<E>()
                 });
             return  query.Results;            
-        }
+        }      
 
         internal void LinkFileBetweenCommits()
         {
@@ -193,6 +210,17 @@ namespace GitAnalysis
             // Match : match (f1)-[e1:NextFileVersion]->(f2)-[e2:NextFileVersion]->(f3),(c)-[e3:NoModification]->(f2) return f2
             // create f1->f3
             // remove e1,e2,e3,f2            
+        }
+
+        internal void AddTransitionEdge(string fromCommitSha, string fromCommitPath, long fromAstId, string toCommitSha, string toCommitPaht, long toAstId, BaseEdge edge)
+        {
+            var query = this.client.Cypher                        
+                        .MatchQuerry("n1", new AstElement() { AstId = fromAstId, FilePath = fromCommitPath, CommitSha = fromCommitSha })
+                        .MatchQuerry("n2", new AstElement() { AstId = toAstId, FilePath = toCommitPaht, CommitSha = toCommitSha })
+                        .Create("(n1)-[:" + edge.GetType().Name + " {newEdge}]->(n2)")
+                        .WithParam("newEdge", edge);
+
+            query.ExecuteWithoutResults();
         }
     }
 }

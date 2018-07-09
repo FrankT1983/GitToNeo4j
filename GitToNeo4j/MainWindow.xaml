@@ -34,14 +34,20 @@
         <Label Grid.Row="2" Grid.Column="0" >Local Result Destination</Label>
 
         <Button Grid.Row="0" Grid.Column="2" Margin="5" Click="OnClone" >Clone</Button>
-        <Button Grid.Row="1" Grid.Column="2" Margin="5" Click="OnClear" >ClearDB</Button>
         
-        <Button Grid.Row="3" Grid.Column="2"  Margin="5" Click="OnCommitsToDb">Commits To Db</Button>
-        <Button Grid.Row="4" Grid.Column="2"  Margin="5" Click="OnParseAst">ParseAst</Button>
+        
+     
 
         <ScrollViewer Grid.Row="5" Grid.ColumnSpan="2">
             <TextBlock   x:Name="Output"></TextBlock>
         </ScrollViewer>
+
+        <StackPanel Orientation="Vertical" Grid.Row="5" Grid.Column="2">
+            <Button Margin="5" Click="OnClear" >Clear DB</Button>
+            <Button Margin="5" Click="OnCommitsToDb">Commits To DB</Button>
+            <Button Margin="5" Click="OnParseAst">Parse AST</Button>
+            <Button Margin="5" Click="OnLinkAst">Link ASTs</Button>
+        </StackPanel>
 
         <ProgressBar Grid.Row="6" Grid.ColumnSpan="2" x:Name="SharedProgressBar"  Margin="2" Minimum="0" Maximum="1"/>
     </Grid>

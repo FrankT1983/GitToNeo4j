@@ -45,4 +45,12 @@ namespace GitAnalysis.AstStuff.InternalGraph
         public long From { get; set; }
         public long To { get; set; }
     }
+
+    [DebuggerDisplay("{From} -[{Mode}]> {To}")]
+    public class TransitionEdge
+    {
+        public long From { get; set; }
+        public long To { get; set; }
+        public String Mode { get; set; }
+    }
 }

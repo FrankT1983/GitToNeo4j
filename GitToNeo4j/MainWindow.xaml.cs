@@ -30,6 +30,38 @@ namespace GitToNeo4j
             this.viewmodel.ProgressChanged += (arg) => this.ProgressChanged(arg);
         }
 
+        private void StatusChanged(string arg)
+        {
+            // todo, check if this thread is the ui thread
+            {
+                Application.Current.Dispatcher.BeginInvoke(
+                  DispatcherPriority.Background,
+                  new Action(() => this.Output.Text += DateTime.Now.ToString("HH:mm:ss : ") + arg + "\n"));
+            }
+        }
+
+        private void ProgressChanged(double arg)
+        {
+            // todo, check if this thread is the ui thread
+            {
+                Application.Current.Dispatcher.BeginInvoke(
+                  DispatcherPriority.Background,
+                  new Action(() =>
+                  {
+                      if (arg < 0)
+                      {
+                          this.SharedProgressBar.IsEnabled = false;
+                          this.SharedProgressBar.Value = 0;
+                      }
+                      else
+                      {
+                          this.SharedProgressBar.IsEnabled = true;
+                          this.SharedProgressBar.Value = arg;
+                      }
+                  }));
+            }
+        }
+
         private void OnClone(object sender, RoutedEventArgs e)
         {            
             this.viewmodel.StartCloning(UrlInput.Text, LokalPath.Text);            
@@ -65,36 +97,13 @@ namespace GitToNeo4j
             this.viewmodel.ClearDb();
         }
 
-        private void StatusChanged(string arg)
+        private void OnLinkAst(object sender, RoutedEventArgs e)
         {
-            // todo, check if this thread is the ui thread
+            this.viewmodel.LinkAsts(new ViewModel.AnalysisOptions()
             {
-                Application.Current.Dispatcher.BeginInvoke(
-                  DispatcherPriority.Background,
-                  new Action(() => this.Output.Text += DateTime.Now.ToString("HH:mm:ss : ") + arg + "\n"));
-            }
-        }
-
-        private void ProgressChanged(double arg)
-        {
-            // todo, check if this thread is the ui thread
-            {
-                Application.Current.Dispatcher.BeginInvoke(
-                  DispatcherPriority.Background,
-                  new Action(() =>
-                  {
-                      if (arg < 0)
-                      {
-                          this.SharedProgressBar.IsEnabled = false;
-                          this.SharedProgressBar.Value = 0;
-                      }
-                      else
-                      {
-                          this.SharedProgressBar.IsEnabled = true;
-                          this.SharedProgressBar.Value = arg;
-                      }
-                  }));
-            }
-        }
+                LocalPath = this.LokalPath.Text,
+                AnalysisPath = this.LokalAnalysisPath.Text
+            });            
+        }           
     }
 }
