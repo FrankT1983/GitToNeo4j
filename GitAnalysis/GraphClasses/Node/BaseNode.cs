@@ -2,6 +2,8 @@
 {
     public class BaseNode
     {
+        internal static string ContainsFile = "ContainsFile";
+
         public BaseNode(Neo4jWrapper neo4jwrapp)
         {            
             this.Id = neo4jwrapp != null ? neo4jwrapp.NextNodeId() : -1;

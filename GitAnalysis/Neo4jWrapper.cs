@@ -119,6 +119,17 @@ namespace GitAnalysis
             query.ExecuteWithoutResults();
         }
 
+        internal void WriteEdge(BaseNode fromNode, BaseNode toNode, BaseEdge edge, BaseEdge edge2)
+        {
+            var query = client.Cypher.MatchQuerry("n", fromNode)
+                         .MatchQuerry("m", toNode).
+                             Create("(n)-[:" + edge.GetType().Name + " {newEdge}]->(m)").
+                             Create("(n)-[:" + edge2.GetType().Name + " {newEdge2}]->(m)").
+                             WithParam("newEdge", edge).WithParam("newEdge2", edge2);
+
+            query.ExecuteWithoutResults();
+        }
+
         internal IEnumerable<T> Find<T>(Type type)
         {
             var query = client.Cypher.Match("(n:" + type.Name + ")").Return<T>("n");
@@ -150,6 +161,38 @@ namespace GitAnalysis
                     Edge = edge.As<E>()
                 });
             return  query.Results;            
+        }
+
+        internal void LinkFileBetweenCommits()
+        {
+            // todo: not sure, if I can seperate the finding of this convoluted chain good enough.
+            // scr:File <[ContainsFile]-Commit-[nextCommit]->Commit-[ContainsFile]->dst:File mit pfad == 
+            string fileNode = typeof(File).Name;
+            string commitNode = "(:" + typeof(Commit).Name + ")";
+            string fileEdge = typeof(ContainsFile).Name ;
+            string nextCommitEdge = typeof(NextCommit).Name;
+            var query = client.Cypher.Match("(scr:" + fileNode + ")<-" + "[e1:" + fileEdge + "]-" + commitNode + "-["+ nextCommitEdge + "]->" + commitNode + "-[e2:" + fileEdge + "]->(dst:" + fileNode + ")")
+                .Where("scr.Path = dst.Path")
+                .Create(" (scr)-[:"+typeof(NextFileVersion).Name+ "]->(dst)")                
+                .Delete("e1,e2");
+
+            var tmp = query.Query.DebugQueryText;
+
+            query.ExecuteWithoutResults();
+        }
+
+        internal void RemoveIntermediateNoChanges()
+        {
+            // shrink multiple non modifications
+            var query = this.client.Cypher.Match("(f1)-[e1:NextFileVersion]->(f2)-[e2:NextFileVersion]->(f3),(c1)-[e3:NoModification]->(f2)")
+                .Delete("f2,e1,e2,e3")
+                .Create(" (f1)-[:" + typeof(NextFileVersion).Name + "]->(f3)");
+             query.ExecuteWithoutResults();
+
+            // remove last bit
+            // Match : match (f1)-[e1:NextFileVersion]->(f2)-[e2:NextFileVersion]->(f3),(c)-[e3:NoModification]->(f2) return f2
+            // create f1->f3
+            // remove e1,e2,e3,f2            
         }
     }
 }

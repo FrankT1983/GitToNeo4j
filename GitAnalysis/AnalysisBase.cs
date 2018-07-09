@@ -43,13 +43,14 @@ namespace GitAnalysis
             AddPersonsToGraph(commits);
             this.FireStatusChanged("Finished Persons, write Commits and link to persons");
             AddCommitsAndLinkToPersons(commits);
-            this.FireStatusChanged("Person <-> Commit, Write Commit <-> Commit");
+            this.FireStatusChanged("Finished Person <-> Commit, Write Commit <-> Commit");
             AddCommitParentChildDependencies(commits);
-            this.FireStatusChanged("Commit <-> Commit, Write Commit <-> File");
+            this.FireStatusChanged("Finished Commit <-> Commit, Write Commit <-> File");
             AddCommitFiles(commits);
 
-            this.FireStatusChanged("File <-> Commit, Write File <-> File");
+            this.FireStatusChanged("Finished File <-> Commit, Write File <-> File");
             AddFilesToFile(commits);
+            this.FireStatusChanged("Finished File <-> File");
 
             this.neo4jwrapp.UpdateInfo();
         }
@@ -192,25 +193,31 @@ namespace GitAnalysis
 
         private void AddFilesToFile(List<LibGit2Sharp.Commit> commits)
         {
-            var edges = this.neo4jwrapp.FindAllEdgesBetweenTypes<GraphClasses.Node.Commit, ModifiedFile, File>();
-
-            foreach(var e in edges)
-            {
-                var changeOriginCommit = e.Edge.ChangeParrentCommit;
-                var currentFilePath = e.To.Path;
-
-                var originFile = this.neo4jwrapp.Find<File>(new File() { Path = currentFilePath, Commit = changeOriginCommit }).FirstOrDefault();
-
-                if (originFile!=null)
-                {
-                    this.neo4jwrapp.WriteEdge(originFile, e.To, new NextFileVersion(this.neo4jwrapp));
-                }
-                
-
-            }
 
 
-            int blub;
+            // File <[ContainsFile]-Commit-[nextCommit]->Commit-[ContainsFile]->File mit pfad == 
+
+            // todo: do renames first??
+            this.neo4jwrapp.LinkFileBetweenCommits();
+
+            //var edges = this.neo4jwrapp.FindAllEdgesBetweenTypes<GraphClasses.Node.Commit, ModifiedFile, File>();
+            //foreach (var e in edges)
+            //{
+            //    var changeOriginCommit = e.Edge.ChangeParrentCommit;
+            //    var currentFilePath = e.To.Path;
+
+            //    var originFile = this.neo4jwrapp.Find<File>(new File() { Path = currentFilePath, Commit = changeOriginCommit }).FirstOrDefault();
+
+            //    if (originFile!=null)
+            //    {
+            //        this.neo4jwrapp.WriteEdge(originFile, e.To, new NextFileVersion(this.neo4jwrapp));
+            //    }
+
+
+            //}
+
+
+            this.neo4jwrapp.RemoveIntermediateNoChanges();
 
         }
 
@@ -246,17 +253,17 @@ namespace GitAnalysis
                                 switch (change.Status)
                                 {
                                     case ChangeKind.Modified:
-                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new ModifiedFile(this.neo4jwrapp) { ChangeParrentCommit= p.Sha });
+                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new ModifiedFile(this.neo4jwrapp) { ChangeParrentCommit= p.Sha }, new ContainsFile(this.neo4jwrapp));
                                         break;
                                     case ChangeKind.Renamed:
-                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new RenamedFile(this.neo4jwrapp));
+                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new RenamedFile(this.neo4jwrapp), new ContainsFile(this.neo4jwrapp));
                                         break;
                                     case ChangeKind.Added:
-                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new CreatedFile(this.neo4jwrapp));
+                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new CreatedFile(this.neo4jwrapp), new ContainsFile(this.neo4jwrapp));
                                         break;
                                     default:
                                         int useForBreakPoint = 0;
-                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new ModifiedFile(this.neo4jwrapp) { ChangeParrentCommit = p.Sha });
+                                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new ModifiedFile(this.neo4jwrapp) { ChangeParrentCommit = p.Sha }, new ContainsFile(this.neo4jwrapp));
                                         break;
                                 }
                             }
@@ -293,7 +300,7 @@ namespace GitAnalysis
                         var fileNode = new File(this.neo4jwrapp) { Path = element.Path, Commit = c.Sha };
 
                         this.neo4jwrapp.WriteNode(fileNode);
-                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new NoModification(this.neo4jwrapp));
+                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new NoModification(this.neo4jwrapp), new ContainsFile(this.neo4jwrapp));
                     }
                 }
                 else
@@ -311,7 +318,7 @@ namespace GitAnalysis
                         var fileNode = new File(this.neo4jwrapp) { Path = element.Path, Commit = c.Sha };
 
                         this.neo4jwrapp.WriteNode(fileNode);
-                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new CreatedFile(this.neo4jwrapp));
+                        this.neo4jwrapp.WriteEdge(new GraphClasses.Node.Commit(null) { Sha = c.Sha }, fileNode, new CreatedFile(this.neo4jwrapp), new ContainsFile(this.neo4jwrapp));
                     }
                 }
             }
