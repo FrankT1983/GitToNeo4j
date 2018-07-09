@@ -35,7 +35,7 @@ namespace GitAnalysis.AstStuff.InternalGraph
 
                 return n;
             }
-            throw new EntryPointNotFoundException("Did not find root node");
+            throw new EntryPointNotFoundException("Did not find root node");            
         }
     }
 

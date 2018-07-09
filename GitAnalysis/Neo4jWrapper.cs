@@ -144,7 +144,7 @@ namespace GitAnalysis
             return query.Results;
         }
 
-        internal void AddLabel(File file, string hasAstLabel)
+        internal void AddLabel(BaseNode file, string hasAstLabel)
         {
             var query = client.Cypher.MatchQuerry("n", file).Set("n:" + hasAstLabel );
             query.ExecuteWithoutResults();
@@ -212,11 +212,30 @@ namespace GitAnalysis
             // remove e1,e2,e3,f2            
         }
 
+        internal void PropagadeModifictionAttribute()
+        {
+            // "match (n1:AstElement)-[:ModifiedCode]->(n2:AstElement), (above:AstElement)-[:AstAbove*]->(n1) set above.ChildWasModified = above.ChildWasModified +1"
+            this.client.Cypher.Match("(n1:AstElement)-[:ModifiedCode]->(n2:AstElement), (above:AstElement)-[:AstAbove*]->(n1)")
+                .Set("above.ChildWasModified = above.ChildWasModified +1")
+                .ExecuteWithoutResults();
+        }
+
         internal void AddTransitionEdge(string fromCommitSha, string fromCommitPath, long fromAstId, string toCommitSha, string toCommitPaht, long toAstId, BaseEdge edge)
         {
             var query = this.client.Cypher                        
                         .MatchQuerry("n1", new AstElement() { AstId = fromAstId, FilePath = fromCommitPath, CommitSha = fromCommitSha })
                         .MatchQuerry("n2", new AstElement() { AstId = toAstId, FilePath = toCommitPaht, CommitSha = toCommitSha })
+                        .Create("(n1)-[:" + edge.GetType().Name + " {newEdge}]->(n2)")
+                        .WithParam("newEdge", edge);
+
+            query.ExecuteWithoutResults();
+        }
+
+        internal void AddTransitionEdge(string fromCommitSha, string fromCommitPath, long fromAstId, BaseNode destNode, BaseEdge edge)
+        {
+            var query = this.client.Cypher
+                        .MatchQuerry("n1", new AstElement() { AstId = fromAstId, FilePath = fromCommitPath, CommitSha = fromCommitSha })
+                        .MatchQuerry("n2", destNode)
                         .Create("(n1)-[:" + edge.GetType().Name + " {newEdge}]->(n2)")
                         .WithParam("newEdge", edge);
 

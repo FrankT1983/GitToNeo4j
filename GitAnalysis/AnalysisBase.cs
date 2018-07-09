@@ -148,6 +148,29 @@ namespace GitAnalysis
                 this.FireProgressChanged(i++ / (double)files.Count);
                 var fileContent = GetRaw(file.Commit, file.Path);
                 var parsedGraph = GumTreeWrapper.Parse(fileContent);
+
+                bool complete = false;
+                int triedCount = 0;
+                while (!complete && triedCount <3)
+                { 
+                    try
+                    {
+                        var foo = parsedGraph.GetRoot();
+                        complete = true;
+                        
+                    } catch (Exception e)
+                    {
+                        triedCount++;
+                        FireStatusChanged("Could not parse with GumTree ... Try again. " + file.Path + " "  + file.Commit);
+                    }
+                }
+                
+                if (!complete)
+                {
+                    FireStatusChanged("Could not parse with GumTree ... Give up ... next File. " + file.Path + " " + file.Commit);
+                    continue;
+                }
+
                 AddAstGraphToGraph(parsedGraph, file);
 
                 this.neo4jwrapp.AddLabel(file, File.HasAstLabel);
@@ -174,9 +197,24 @@ namespace GitAnalysis
                 var toContent = GetRaw(e.To.Commit, e.To.Path);
 
                 var transitions = GumTreeWrapper.Compare2(fromContent,toContent);
+                
+                int triedCount = 0;
+                while (transitions == null  && triedCount < 3)
+                {
+                    try
+                    {
+                        var foo = GumTreeWrapper.Compare2(fromContent, toContent);                    
+
+                    }
+                    catch (Exception )
+                    {
+                        triedCount++;
+                        FireStatusChanged("Could not compare with GumTree ... Try again. ");
+                    }
+                }
 
 
-                foreach(var transitionEdge in transitions)
+                foreach (var transitionEdge in transitions)
                 {
                     if ( String.Compare(transitionEdge.Mode,"Keep") == 0 )
                     {
@@ -188,7 +226,7 @@ namespace GitAnalysis
 
                     if (String.Compare(transitionEdge.Mode, "Insert") == 0)
                     {
-
+                        this.neo4jwrapp.AddLabel(new AstElement() {CommitSha = e.From.Commit, FilePath = e.From.Path, AstId = transitionEdge.From }, BaseNode.ContainsFile);
                         continue;
                     }
 
@@ -200,11 +238,21 @@ namespace GitAnalysis
                         continue;
                     }
 
+                    if (String.Compare(transitionEdge.Mode, "Delete") == 0)
+                    {
+                        this.neo4jwrapp.AddTransitionEdge(e.From.Commit, e.From.Path, transitionEdge.From,
+                                                          new AstElementDeleted() { CommitSha = e.To.Commit, FilePath = e.To.Path },
+                                                          new CodeRemoved(this.neo4jwrapp));
+                        continue;
+                    }
+
                     throw new NotImplementedException("Missing Ast Transition for "+transitionEdge.Mode);
                 }
 
                 this.neo4jwrapp.WriteEdge(e.From, e.To, new WithAstTransition(this.neo4jwrapp));                
             }
+
+            this.neo4jwrapp.PropagadeModifictionAttribute();
             this.FireProgressChanged(-1);
         }
 
@@ -222,6 +270,10 @@ namespace GitAnalysis
             if (root != null)
             {
                 this.neo4jwrapp.WriteEdge(rootFile, root, new AstOfFile(this.neo4jwrapp));
+
+                var deleteNode = new AstElementDeleted(this.neo4jwrapp) { CommitSha = rootFile.Commit, FilePath = rootFile.Path };
+                this.neo4jwrapp.WriteNode(deleteNode);
+                this.neo4jwrapp.WriteEdge(rootFile, deleteNode, new AstSpecialNode(this.neo4jwrapp));
             }
 
             foreach (var e in parsedGraph.Edges)

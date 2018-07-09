@@ -26,6 +26,11 @@ namespace GitAnalysis
                 return cypher.MatchQuerry(varialbeName, (AstElement)node);
             }
 
+            if (node is AstElementDeleted)
+            {
+                return cypher.MatchQuerry(varialbeName, (AstElementDeleted)node);
+            }
+
             string matchClause = "(" + varialbeName + ":" + node.GetType().Name + ")";
             if (node.Id > 0)
             {
@@ -81,6 +86,23 @@ namespace GitAnalysis
                 wherClause.Add(varialbeName + "." + nameof(node.CommitSha) + "=\"" + node.CommitSha + "\"");
             }
             return cypher.Match(matchClause).Where(String.Join(" and " , wherClause));
+        }
+
+        public static ICypherFluentQuery MatchQuerry(this ICypherFluentQuery cypher, string varialbeName, AstElementDeleted node)
+        {
+            string matchClause = "(" + varialbeName + ":" + node.GetType().Name + ")";
+
+            var wherClause = new List<String>();          
+            if (!String.IsNullOrWhiteSpace(node.FilePath))
+            {
+                wherClause.Add(varialbeName + "." + nameof(node.FilePath) + "=\"" + node.FilePath + "\"");
+            }
+
+            if (!String.IsNullOrWhiteSpace(node.CommitSha))
+            {
+                wherClause.Add(varialbeName + "." + nameof(node.CommitSha) + "=\"" + node.CommitSha + "\"");
+            }
+            return cypher.Match(matchClause).Where(String.Join(" and ", wherClause));
         }
     }
 }

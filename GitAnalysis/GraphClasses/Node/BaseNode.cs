@@ -3,6 +3,7 @@
     public class BaseNode
     {
         internal static string ContainsFile = "ContainsFile";
+        internal static string AstInstert = "AstInstert";
 
         public BaseNode(Neo4jWrapper neo4jwrapp)
         {            

@@ -10,4 +10,15 @@
         {
         }
     }
+
+    public class AstSpecialNode : BaseEdge
+    {
+        public AstSpecialNode(Neo4jWrapper neo4jwrapp) : base(neo4jwrapp)
+        {
+        }
+
+        public AstSpecialNode() : base(-1)
+        {
+        }
+    }
 }

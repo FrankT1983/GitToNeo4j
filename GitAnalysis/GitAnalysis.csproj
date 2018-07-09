@@ -171,6 +171,7 @@
     <Compile Include="GraphClasses\Edges\AstOfFile.cs" />
     <Compile Include="GraphClasses\Edges\Author.cs" />
     <Compile Include="GraphClasses\Edges\BaseEdge.cs" />
+    <Compile Include="GraphClasses\Edges\CodeRemoved.cs" />
     <Compile Include="GraphClasses\Edges\Commitor.cs" />
     <Compile Include="GraphClasses\Edges\CreatedFile.cs" />
     <Compile Include="GraphClasses\Edges\ModifiedCode.cs" />
@@ -182,6 +183,7 @@
     <Compile Include="GraphClasses\Edges\RenamedFile.cs" />
     <Compile Include="GraphClasses\Edges\WithAstTransition.cs" />
     <Compile Include="GraphClasses\Node\AstElement.cs" />
+    <Compile Include="GraphClasses\Node\AstElementDeleted.cs" />
     <Compile Include="GraphClasses\Node\BaseNode.cs" />
     <Compile Include="GraphClasses\Node\Commit.cs" />
     <Compile Include="GraphClasses\Node\File.cs" />

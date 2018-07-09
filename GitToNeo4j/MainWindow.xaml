@@ -24,9 +24,9 @@
             <RowDefinition Height="15" />
         </Grid.RowDefinitions>
 
-        <TextBox Grid.Row="0" Grid.Column="1" x:Name="UrlInput" HorizontalAlignment="Stretch" VerticalAlignment="Center">https://github.com/FrankT1983/HelloWorldParseTest.git</TextBox>
-        <TextBox Grid.Row="1" Grid.Column="1" x:Name="LokalPath" HorizontalAlignment="Stretch" VerticalAlignment="Center">C:/Tmp/GitTest2</TextBox>
-        <TextBox Grid.Row="2" Grid.Column="1" x:Name="LokalAnalysisPath" HorizontalAlignment="Stretch" VerticalAlignment="Center">C:/Tmp/BaseForNow</TextBox>
+        <TextBox Grid.Row="0" Grid.Column="1" x:Name="UrlInput" HorizontalAlignment="Stretch" VerticalAlignment="Center">https://github.com/FrankT1983/HelloWorldParseTest2.git</TextBox>
+        <TextBox Grid.Row="1" Grid.Column="1" x:Name="LokalPath" HorizontalAlignment="Stretch" VerticalAlignment="Center">C:/Tmp/GitTest4</TextBox>
+        <TextBox Grid.Row="2" Grid.Column="1" x:Name="LokalAnalysisPath" HorizontalAlignment="Stretch" VerticalAlignment="Center">C:/Tmp/BaseForNow4</TextBox>
 
 
         <Label Grid.Row="0" Grid.Column="0" >Git Repo Path</Label>

@@ -76,11 +76,22 @@ namespace GitAnalysis.AstStuff
             System.IO.File.WriteAllText(file1, content1);
             System.IO.File.WriteAllText(file2, content2);
 
+
+
             var gumTreeResult = Run("java", " -jar C:\\PlayGround\\Java\\GumTreeClient.jar " + file1 + " " + file2);
+            
+            if (string.IsNullOrWhiteSpace(gumTreeResult))
+            { gumTreeResult = Run("java", " -jar C:\\PlayGround\\Java\\GumTreeClient.jar " + file1 + " " + file2); }
+
+            if (string.IsNullOrWhiteSpace(gumTreeResult))
+            { gumTreeResult = Run("java", " -jar C:\\PlayGround\\Java\\GumTreeClient.jar " + file1 + " " + file2); }
+
 
             System.IO.File.Delete(file1);
             System.IO.File.Delete(file2);
 
+            if (string.IsNullOrWhiteSpace(gumTreeResult))
+            { return null; }
             return ParseGumTreeOutToTransitionGraph(gumTreeResult);
         }
 

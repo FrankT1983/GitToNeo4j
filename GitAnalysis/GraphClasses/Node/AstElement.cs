@@ -15,6 +15,8 @@ namespace GitAnalysis.GraphClasses.Node
         public string FilePath { get; internal set; }
         public string CommitSha { get; internal set; }
 
+        public int ChildsModified { get; internal set; }
+
         public AstElement(Neo4jWrapper neo4jwrapp) : base(neo4jwrapp)
         {
         }
